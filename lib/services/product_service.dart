@@ -38,7 +38,6 @@ class ProductService {
 
         // Determine product name.
         String productName = product["product_name"] ?? "Unknown Product";
-        print("Raw product name: $productName");
 
         
         if (productName.toLowerCase().contains("milma") ||

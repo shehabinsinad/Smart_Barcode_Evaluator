@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:food_scanner_app/services/auth_service.dart';
+import 'package:food_scanner_app/utils/validation_helper.dart';
 
 class SignupCredentialsScreen extends StatefulWidget {
-  const SignupCredentialsScreen({Key? key}) : super(key: key);
+  const SignupCredentialsScreen({super.key});
 
   @override
-  _SignupCredentialsScreenState createState() => _SignupCredentialsScreenState();
+  SignupCredentialsScreenState createState() => SignupCredentialsScreenState();
 }
 
-class _SignupCredentialsScreenState extends State<SignupCredentialsScreen> {
+class SignupCredentialsScreenState extends State<SignupCredentialsScreen> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
   void _next() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
     setState(() {
       _isLoading = true;
     });
@@ -27,10 +32,14 @@ class _SignupCredentialsScreenState extends State<SignupCredentialsScreen> {
     });
     if (result == null) {
       // Proceed to the preferences page if signup succeeded.
-      Navigator.pushReplacementNamed(context, '/signup_preferences');
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/signup_preferences');
+      }
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(result)));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(result)));
+      }
     }
   }
 
@@ -44,8 +53,8 @@ class _SignupCredentialsScreenState extends State<SignupCredentialsScreen> {
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide(color: Colors.grey[600]!),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.yellow),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.yellow),
       ),
     );
   }
@@ -56,29 +65,34 @@ class _SignupCredentialsScreenState extends State<SignupCredentialsScreen> {
       appBar: AppBar(title: const Text("Sign Up - Credentials")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            TextField(
-              controller: emailController,
-              decoration: _buildInputDecoration("Email"),
-              keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              decoration: _buildInputDecoration("Password"),
-              obscureText: true,
-              style: const TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 24),
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton(
-                    onPressed: _next,
-                    child: const Text("Next", style: TextStyle(fontSize: 18)),
-                  ),
-          ],
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: emailController,
+                decoration: _buildInputDecoration("Email"),
+                keyboardType: TextInputType.emailAddress,
+                style: const TextStyle(color: Colors.white),
+                validator: ValidationHelper.validateEmail,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: passwordController,
+                decoration: _buildInputDecoration("Password"),
+                obscureText: true,
+                style: const TextStyle(color: Colors.white),
+                validator: ValidationHelper.validatePassword,
+              ),
+              const SizedBox(height: 24),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                      onPressed: _next,
+                      child: const Text("Next", style: TextStyle(fontSize: 18)),
+                    ),
+            ],
+          ),
         ),
       ),
     );

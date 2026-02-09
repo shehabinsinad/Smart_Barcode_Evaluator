@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "635109717625",
+    "project_id": "food-scanner-692f7",
+    "storage_bucket": "food-scanner-692f7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635109717625:android:8e618538e5b586c3dd06a8",
+        "android_client_info": {
+          "package_name": "com.example.food_scanner_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "635109717625-nnansghdc8ggb5utgiijfprbu4sa1m5p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.food_scanner_app",
+            "certificate_hash": "1780d1bd604c8b187e1b3808ed819de71bf4cc23"
+          }
+        },
+        {
+          "client_id": "635109717625-jmhutj5kul678mspu3naggpn0pqsk59k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASXQ9hY15aqLWy3s-3BVoAN2XKDp_V114"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "635109717625-jmhutj5kul678mspu3naggpn0pqsk59k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "635109717625-civaili3kqapgvnphlh8q2083r6bueup.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.foodScannerApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

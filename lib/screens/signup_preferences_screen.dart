@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:food_scanner_app/utils/validation_helper.dart';
+import 'package:food_scanner_app/components/custom_card.dart';
+import 'package:food_scanner_app/components/animated_button.dart';
+import 'package:food_scanner_app/theme/app_colors.dart';
+import 'package:food_scanner_app/theme/app_theme.dart';
 import '../services/user_service.dart';
 
 class SignupPreferencesScreen extends StatefulWidget {
-  const SignupPreferencesScreen({Key? key}) : super(key: key);
+  const SignupPreferencesScreen({super.key});
 
   @override
-  _SignupPreferencesScreenState createState() => _SignupPreferencesScreenState();
+  SignupPreferencesScreenState createState() => SignupPreferencesScreenState();
 }
 
-class _SignupPreferencesScreenState extends State<SignupPreferencesScreen> {
+class SignupPreferencesScreenState extends State<SignupPreferencesScreen> {
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController heightController = TextEditingController();
   final TextEditingController weightController = TextEditingController();
 
@@ -31,31 +38,10 @@ class _SignupPreferencesScreenState extends State<SignupPreferencesScreen> {
   Set<String> selectedConditions = {};
 
   bool _isLoading = false;
-
-  InputDecoration _buildInputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: Colors.grey[800],
-      labelStyle: const TextStyle(color: Colors.white),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey[600]!),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.yellow),
-      ),
-    );
-  }
+  final _formKey = GlobalKey<FormState>();
 
   void _finishSignup() async {
-    if (heightController.text.trim().isEmpty || weightController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Height and Weight are mandatory. Please enter both."),
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (!_formKey.currentState!.validate()) {
       return;
     }
     
@@ -65,6 +51,7 @@ class _SignupPreferencesScreenState extends State<SignupPreferencesScreen> {
     String allergies = selectedAllergies.join(", ");
     String conditions = selectedConditions.join(", ");
     await UserService().saveUserData(
+      nameController.text.trim(),
       heightController.text.trim(),
       weightController.text.trim(),
       allergies,
@@ -73,102 +60,256 @@ class _SignupPreferencesScreenState extends State<SignupPreferencesScreen> {
     setState(() {
       _isLoading = false;
     });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text("Sign up successful!")));
-    Navigator.pushReplacementNamed(context, '/home');
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text("Sign up successful!")));
+      Navigator.pushReplacementNamed(context, '/home');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
-      appBar: AppBar(title: const Text("Sign Up - Preferences")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            TextField(
-              controller: heightController,
-              decoration: _buildInputDecoration("Height (cm) *"),
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: weightController,
-              decoration: _buildInputDecoration("Weight (kg) *"),
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              "Select Allergens:",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            Theme(
-              data: Theme.of(context).copyWith(
-                checkboxTheme: CheckboxThemeData(
-                  // When selected, the box (fill) will be yellow
-                  fillColor: MaterialStateProperty.all(Colors.yellow),
-                  // The tick mark will be black
-                  checkColor: MaterialStateProperty.all(Colors.black),
-                ),
-              ),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text("Complete Your Profile", style: theme.textTheme.titleLarge),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary,
+              AppColors.primaryDark,
+              theme.scaffoldBackgroundColor,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: const [0.0, 0.3, 0.7],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppTheme.spaceMD),
+            child: Form(
+              key: _formKey,
               child: Column(
-                children: allergensList.map((allergen) {
-                  return CheckboxListTile(
-                    title: Text(allergen, style: const TextStyle(color: Colors.white)),
-                    value: selectedAllergies.contains(allergen.toLowerCase()),
-                    onChanged: (bool? value) {
-                      setState(() {
-                        if (value == true) {
-                          selectedAllergies.add(allergen.toLowerCase());
-                        } else {
-                          selectedAllergies.remove(allergen.toLowerCase());
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: AppTheme.spaceSM),
+                  
+                  // Personal Information Card
+                  CustomCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.primaryGradient,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.person_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spaceSM),
+                            Text(
+                              'Personal Information',
+                              style: theme.textTheme.titleLarge,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppTheme.spaceMD),
+                        TextFormField(
+                          controller: nameController,
+                          decoration: InputDecoration(
+                            labelText: "Full Name *",
+                            prefixIcon: const Icon(Icons.person_outline),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter your name';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppTheme.spaceSM),
+                        TextFormField(
+                          controller: heightController,
+                          decoration: InputDecoration(
+                            labelText: "Height (cm) *",
+                            prefixIcon: const Icon(Icons.height_rounded),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                            ),
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: ValidationHelper.validateHeight,
+                        ),
+                        const SizedBox(height: AppTheme.spaceSM),
+                        TextFormField(
+                          controller: weightController,
+                          decoration: InputDecoration(
+                            labelText: "Weight (kg) *",
+                            prefixIcon: const Icon(Icons.monitor_weight_outlined),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                            ),
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: ValidationHelper.validateWeight,
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
+                  
+                  const SizedBox(height: AppTheme.spaceMD),
+                  
+                  // Allergens Card
+                  CustomCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.secondaryGradient,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spaceSM),
+                            Text(
+                              'Allergens',
+                              style: theme.textTheme.titleLarge,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppTheme.spaceSM),
+                        Text(
+                          'Select any allergens you have:',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spaceSM),
+                        ...allergensList.map((allergen) {
+                          return CheckboxListTile(
+                            title: Text(allergen),
+                            value: selectedAllergies.contains(allergen.toLowerCase()),
+                            onChanged: (bool? value) {
+                              setState(() {
+                                if (value == true) {
+                                  selectedAllergies.add(allergen.toLowerCase());
+                                } else {
+                                  selectedAllergies.remove(allergen.toLowerCase());
+                                }
+                              });
+                            },
+                            activeColor: AppColors.primary,
+                            contentPadding: EdgeInsets.zero,
+                          );
+                        }),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
+                  
+                  const SizedBox(height: AppTheme.spaceMD),
+                  
+                  // Health Conditions Card
+                  CustomCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.error,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.health_and_safety_rounded,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: AppTheme.spaceSM),
+                            Text(
+                              'Health Conditions',
+                              style: theme.textTheme.titleLarge,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppTheme.spaceSM),
+                        Text(
+                          'Select any health conditions you have:',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.textTheme.bodySmall?.color,
+                          ),
+                        ),
+                        const SizedBox(height: AppTheme.spaceSM),
+                        ...conditionsList.map((condition) {
+                          return CheckboxListTile(
+                            title: Text(condition),
+                            value: selectedConditions.contains(condition.toLowerCase()),
+                            onChanged: (bool? value) {
+                              setState(() {
+                                if (value == true) {
+                                  selectedConditions.add(condition.toLowerCase());
+                                } else {
+                                  selectedConditions.remove(condition.toLowerCase());
+                                }
+                              });
+                            },
+                            activeColor: AppColors.primary,
+                            contentPadding: EdgeInsets.zero,
+                          );
+                        }),
+                      ],
+                    ),
+                  ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
+                  
+                  const SizedBox(height: AppTheme.spaceLG),
+                  
+                  // Submit Button
+                  _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          ),
+                        )
+                      : AnimatedButton(
+                          text: 'Finish Sign Up',
+                          icon: Icons.check_circle_rounded,
+                          gradient: AppColors.primaryGradient,
+                          onPressed: _finishSignup,
+                        ).animate().fadeIn(delay: 800.ms).scale(begin: const Offset(0.9, 0.9)),
+                  
+                  const SizedBox(height: AppTheme.spaceMD),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              "Select Health Conditions:",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            Theme(
-              data: Theme.of(context).copyWith(
-                checkboxTheme: CheckboxThemeData(
-                  fillColor: MaterialStateProperty.all(Colors.yellow),
-                  checkColor: MaterialStateProperty.all(Colors.black),
-                ),
-              ),
-              child: Column(
-                children: conditionsList.map((condition) {
-                  return CheckboxListTile(
-                    title: Text(condition, style: const TextStyle(color: Colors.white)),
-                    value: selectedConditions.contains(condition.toLowerCase()),
-                    onChanged: (bool? value) {
-                      setState(() {
-                        if (value == true) {
-                          selectedConditions.add(condition.toLowerCase());
-                        } else {
-                          selectedConditions.remove(condition.toLowerCase());
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 24),
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton(
-                    onPressed: _finishSignup,
-                    child: const Text("Finish Sign Up", style: TextStyle(fontSize: 18)),
-                  ),
-          ],
+          ),
         ),
       ),
     );

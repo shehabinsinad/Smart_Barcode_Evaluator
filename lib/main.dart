@@ -1,68 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart';
-import 'package:food_scanner_app/services/auth_service.dart';
+import 'package:food_scanner_app/firebase_options.dart';
+import 'package:food_scanner_app/theme/app_theme.dart';
+import 'package:food_scanner_app/utils/page_transitions.dart';
+
+// Screens
 import 'package:food_scanner_app/screens/landing_screen.dart';
 import 'package:food_scanner_app/screens/login_screen.dart';
 import 'package:food_scanner_app/screens/signup_credentials_screen.dart';
 import 'package:food_scanner_app/screens/signup_preferences_screen.dart';
 import 'package:food_scanner_app/screens/home_screen.dart';
-import 'package:food_scanner_app/screens/scanner_screen.dart';
-import 'package:food_scanner_app/screens/update_preferences_screen.dart';
 import 'package:food_scanner_app/screens/results_screen.dart';
+import 'package:food_scanner_app/screens/scanner_screen.dart';
+import 'package:food_scanner_app/screens/product_not_found_screen.dart';
+import 'package:food_scanner_app/screens/history_screen.dart';
+import 'package:food_scanner_app/screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        StreamProvider.value(
-          value: AuthService().authStateChanges,
-          initialData: null,
-        ),
-      ],
-      child: MaterialApp(
+    return MaterialApp(
+        title: 'Food Scanner',
         debugShowCheckedModeBanner: false,
-        title: 'Food Scanner App',
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF121212),
-          fontFamily: 'Lato',
-          colorScheme: ColorScheme.dark(
-            primary: const Color(0xFF121212),
-            secondary: const Color(0xFFFFD400),
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD400),
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-        initialRoute: '/landing',
-        routes: {
-          '/landing': (context) => const LandingScreen(),
-          '/login': (context) => const LoginScreen(),
-          '/signup_credentials': (context) => const SignupCredentialsScreen(),
-          '/signup_preferences': (context) => const SignupPreferencesScreen(),
-          '/home': (context) => const HomeScreen(),
-          '/scanner': (context) => const ScannerScreen(),
-          '/update_preferences': (context) => const UpdatePreferencesScreen(),
-          '/results': (context) => const ResultsScreen(),
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        home: const LandingScreen(),
+        onGenerateRoute: (settings) {
+          // Custom transitions for different routes
+          switch (settings.name) {
+            case '/login':
+              return AppPageRoute.slideFade(const LoginScreen());
+            case '/signup_credentials':
+              return AppPageRoute.slideRight(const SignupCredentialsScreen());
+            case '/signup_preferences':
+              return AppPageRoute.slideRight(const SignupPreferencesScreen());
+            case '/home':
+              return AppPageRoute.fade(const HomeScreen(), durationMs: 400);
+            case '/scanner':
+              return AppPageRoute.slideUp(const ScannerScreen());
+            case '/results':
+              return AppPageRoute.scale(const ResultsScreen());
+            case '/product_not_found':
+              return AppPageRoute.slideFade(const ProductNotFoundScreen());
+            case '/history':
+              return AppPageRoute.slideRight(const HistoryScreen());
+            case '/profile':
+              return AppPageRoute.slideRight(const ProfileScreen());
+            default:
+              return AppPageRoute.fade(const LandingScreen());
+          }
         },
-      ),
-    );
+      );
   }
 }

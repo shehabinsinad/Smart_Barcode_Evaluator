@@ -1,0 +1,1 @@
+[info] Use 'const' with the constructor to improve performance (C:\projects\food-scanner-app\lib\screens\login_screen.dart:62:24)

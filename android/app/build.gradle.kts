@@ -8,7 +8,6 @@ plugins {
 android {
     namespace = "com.example.food_scanner_app"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -22,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.example.food_scanner_app"
         // Update the minSdkVersion assignment for Kotlin DSL:
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
