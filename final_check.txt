@@ -1,1 +1,0 @@
-[error] Methods can't be invoked in constant expressions (C:\projects\food-scanner-app\lib\screens\login_screen.dart:65:19)
