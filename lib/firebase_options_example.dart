@@ -53,10 +53,10 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyASXQ9hY15aqLWy3s-3BVoAN2XKDp_V114',
-    appId: '1:635109717625:android:8e618538e5b586c3dd06a8',
-    messagingSenderId: '635109717625',
-    projectId: 'food-scanner-692f7',
-    storageBucket: 'food-scanner-692f7.firebasestorage.app',
+    apiKey: 'YOUR_API_KEY_HERE',
+    appId: 'YOUR_APP_ID_HERE',
+    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID_HERE',
+    projectId: 'YOUR_PROJECT_ID_HERE',
+    storageBucket: 'YOUR_STORAGE_BUCKET_HERE',
   );
 }
