@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:food_scanner_app/services/auth_service.dart';
 import 'package:food_scanner_app/services/user_service.dart';
+import 'package:food_scanner_app/services/history_service.dart';
 import 'package:food_scanner_app/theme/app_colors.dart';
 import 'package:food_scanner_app/theme/app_theme.dart';
 import 'package:food_scanner_app/components/custom_card.dart';
@@ -18,13 +19,24 @@ class HomeScreenState extends State<HomeScreen> {
   Map<String, String>? userData;
   bool _isLoading = true;
   String email = "";
+  int _scanCount = 0;
 
   Future<void> _loadUserData() async {
-    userData = await UserService().getUserData();
-    email = FirebaseAuth.instance.currentUser?.email ?? "";
-    setState(() {
-      _isLoading = false;
-    });
+    try {
+      userData = await UserService().getUserData();
+      email = FirebaseAuth.instance.currentUser?.email ?? "";
+      final history = await HistoryService().getHistory();
+      if (mounted) {
+        setState(() {
+          _scanCount = history.length;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _logout() async {
@@ -140,8 +152,9 @@ class HomeScreenState extends State<HomeScreen> {
                                     _buildStatItem(
                                       icon: Icons.qr_code_scanner_rounded,
                                       label: 'Scans',
-                                      value: '0',
+                                      value: _scanCount.toString(),
                                       color: AppColors.primary,
+                                      context: context,
                                     ),
                                     Container(
                                       width: 1,
@@ -151,8 +164,9 @@ class HomeScreenState extends State<HomeScreen> {
                                     _buildStatItem(
                                       icon: Icons.history_rounded,
                                       label: 'History',
-                                      value: '0',
+                                      value: _scanCount.toString(),
                                       color: AppColors.secondary,
+                                      context: context,
                                     ),
                                   ],
                                 ),
@@ -190,7 +204,7 @@ class HomeScreenState extends State<HomeScreen> {
                             crossAxisCount: 2,
                             crossAxisSpacing: AppTheme.spaceSM,
                             mainAxisSpacing: AppTheme.spaceSM,
-                            childAspectRatio: 1.1,
+                            childAspectRatio: 1.0,
                           ),
                           delegate: SliverChildListDelegate([
                             _buildActionCard(
@@ -253,7 +267,9 @@ class HomeScreenState extends State<HomeScreen> {
     required String label,
     required String value,
     required Color color,
+    required BuildContext context,
   }) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         Icon(icon, color: color, size: 32),
@@ -268,10 +284,7 @@ class HomeScreenState extends State<HomeScreen> {
         ),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: theme.textTheme.bodySmall,
         ),
       ],
     );
@@ -312,10 +325,10 @@ class HomeScreenState extends State<HomeScreen> {
                 children: [
                   Icon(
                     icon,
-                    size: 48,
+                    size: 40,
                     color: Colors.white,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Text(
                     title,
                     style: const TextStyle(

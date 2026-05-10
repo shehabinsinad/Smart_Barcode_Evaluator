@@ -56,20 +56,20 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
         passwordController.text.trim(),
       );
       
+      if (!mounted) return;
+      
       if (result == null) {
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, '/home');
-          CustomSnackbar.success(context, message: 'Welcome back!');
-        }
+        Navigator.pushReplacementNamed(context, '/home');
+        CustomSnackbar.success(context, message: 'Welcome back!');
       } else {
-        if (mounted) {
-          _shakeController.forward(from: 0);
-          CustomSnackbar.error(context, message: result);
-        }
+        setState(() => _isLoading = false);
+        _shakeController.forward(from: 0);
+        CustomSnackbar.error(context, message: result);
       }
     } on Exception catch (e) {
-      _shakeController.forward(from: 0);
       if (mounted) {
+        setState(() => _isLoading = false);
+        _shakeController.forward(from: 0);
         CustomSnackbar.error(
           context,
           message: 'Login failed: ${e.toString()}',
@@ -82,7 +82,6 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // final size = MediaQuery.of(context).size; // Unused
 
     return Scaffold(
       body: Container(
@@ -105,6 +104,18 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Back to landing
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () =>
+                          Navigator.pushReplacementNamed(context, '/landing'),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                          color: Colors.white70, size: 16),
+                      label: const Text('Back',
+                          style: TextStyle(color: Colors.white70)),
+                    ),
+                  ),
                   // Logo
                   Container(
                     width: 100,
@@ -205,6 +216,17 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
                                     width: 2,
                                   ),
                                 ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.error,
+                                    width: 2,
+                                  ),
+                                ),
+                                errorStyle: const TextStyle(
+                                  color: Color(0xFFFFB3B3),
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                               validator: (value) => ValidationHelper.validateEmail(value),
                             ),
@@ -255,6 +277,17 @@ class LoginScreenState extends State<LoginScreen> with SingleTickerProviderState
                                     color: AppColors.error,
                                     width: 2,
                                   ),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.error,
+                                    width: 2,
+                                  ),
+                                ),
+                                errorStyle: const TextStyle(
+                                  color: Color(0xFFFFB3B3),
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                               validator: (value) => ValidationHelper.validatePassword(value),

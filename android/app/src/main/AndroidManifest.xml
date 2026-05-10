@@ -3,6 +3,9 @@
     package="com.example.food_scanner_app"
 >
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="food_scanner_app"
         android:name="${applicationName}"

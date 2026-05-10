@@ -19,6 +19,11 @@ class HistoryService {
     await _firestore.collection('scanHistory').add(scanData);
   }
 
+  /// Delete a scan from Cloud Firestore by document ID.
+  Future<void> deleteScan(String docId) async {
+    await _firestore.collection('scanHistory').doc(docId).delete();
+  }
+
   /// Retrieve scan history from Cloud Firestore for the current user.
   Future<List<Map<String, dynamic>>> getHistory() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;

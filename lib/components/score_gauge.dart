@@ -110,12 +110,12 @@ class _ScoreGaugeState extends State<ScoreGauge>
                 ),
               ),
               
-              // Score text
+              // Score text — always shows final value (only the arc animates)
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '${(widget.score * _animation.value).toInt()}',
+                    '${widget.score}',
                     style: theme.textTheme.displayLarge?.copyWith(
                       fontSize: widget.size * 0.25,
                       fontWeight: FontWeight.bold,

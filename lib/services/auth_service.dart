@@ -6,39 +6,64 @@ class AuthService {
   // Listen to authentication state changes.
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
+  /// Maps a [FirebaseAuthException] to a friendly, human-readable message.
+  static String _friendlyError(FirebaseAuthException e) {
+    switch (e.code) {
+      // ── Network ──────────────────────────────────────────────────────────
+      case 'network-request-failed':
+        return 'No internet connection. Please check your network and try again.';
+
+      // ── Login errors ─────────────────────────────────────────────────────
+      case 'user-not-found':
+        return 'No account found for that email. Please check your email or sign up.';
+      case 'wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'invalid-credential':
+      // Firebase v10+ collapses user-not-found + wrong-password into this
+        return 'Incorrect email or password. Please try again.';
+      case 'user-disabled':
+        return 'This account has been disabled. Please contact support.';
+      case 'too-many-requests':
+        return 'Too many failed attempts. Please wait a moment before trying again.';
+
+      // ── Sign-up errors ───────────────────────────────────────────────────
+      case 'email-already-in-use':
+        return 'This email is already registered. Please log in instead.';
+      case 'invalid-email':
+        return 'The email address is not valid. Please enter a correct email.';
+      case 'weak-password':
+        return 'Password is too weak. Please use at least 6 characters.';
+      case 'operation-not-allowed':
+        return 'Email/password sign-in is not enabled. Please contact support.';
+
+      default:
+        return e.message ?? 'An unexpected error occurred. Please try again.';
+    }
+  }
+
   /// Signs in with the provided [email] and [password].
-  /// Returns null on success, or an error message on failure.
+  /// Returns null on success, or a friendly error message on failure.
   Future<String?> login(String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
-      return null; // Login successful.
+      return null;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        return 'No account found for that email. Please check your email or sign up.';
-      } else if (e.code == 'wrong-password') {
-        return 'Incorrect password. Please try again.';
-      } else {
-        return e.message ?? 'An error occurred during login. Please try again later.';
-      }
-    } catch (e) {
-      return 'An unknown error occurred. Please try again later.';
+      return _friendlyError(e);
+    } catch (_) {
+      return 'An unexpected error occurred. Please try again.';
     }
   }
 
   /// Signs up with the provided [email] and [password].
-  /// Returns null on success, or an error message on failure.
+  /// Returns null on success, or a friendly error message on failure.
   Future<String?> signUpWithEmail(String email, String password) async {
     try {
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
-      return null; // Sign up successful.
+      return null;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use') {
-        return 'This email is already in use. Please use a different email or log in instead.';
-      } else {
-        return e.message ?? 'An error occurred during sign up. Please try again later.';
-      }
-    } catch (e) {
-      return 'An unknown error occurred. Please try again later.';
+      return _friendlyError(e);
+    } catch (_) {
+      return 'An unexpected error occurred. Please try again.';
     }
   }
 

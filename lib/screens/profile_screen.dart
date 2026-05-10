@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:food_scanner_app/providers/theme_provider.dart';
 import 'package:food_scanner_app/services/auth_service.dart';
 import 'package:food_scanner_app/services/user_service.dart';
 import 'package:food_scanner_app/theme/app_colors.dart';
@@ -25,18 +28,140 @@ class ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadUserData();
+    _loadPreferences();
   }
 
   Future<void> _loadUserData() async {
-    userData = await UserService().getUserData();
-    setState(() => _isLoading = false);
+    final data = await UserService().getUserData();
+    if (mounted) setState(() { userData = data; _isLoading = false; });
   }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _darkMode = prefs.getBool('dark_mode') ?? false;
+        _notifications = prefs.getBool('notifications') ?? true;
+        _hapticFeedback = prefs.getBool('haptic_feedback') ?? true;
+      });
+    }
+  }
+
+  Future<void> _savePref(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+  }
+
 
   void _logout() async {
     await AuthService().signOut();
     if (mounted) {
       Navigator.pushNamedAndRemoveUntil(context, '/landing', (route) => false);
     }
+  }
+
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Help & Support'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildFaqItem(
+                'How does the health score work?',
+                'Your score (0–100) is calculated using the product\'s calorie, sugar, fat, and protein content — personalised to your BMI, allergies, and health conditions.',
+              ),
+              _buildFaqItem(
+                'Why is my score different for the same product?',
+                'Scores are personalised. If you update your profile (weight, height, or conditions), future scans of the same product will reflect those changes.',
+              ),
+              _buildFaqItem(
+                'How do I add allergies?',
+                'Go to Profile → Allergies & Preferences to set your dietary restrictions and health conditions.',
+              ),
+              _buildFaqItem(
+                'Can I delete scan history?',
+                'Yes! Tap any item in Scan History to view details and delete it, or swipe left on a card to remove it quickly.',
+              ),
+              const Divider(),
+              const SizedBox(height: 8),
+              const Text(
+                'Still need help? Contact us at:',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () {},
+                child: const SelectableText(
+                  'support@foodscanner.app',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFaqItem(String question, String answer) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Q: $question',
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            answer,
+            style: const TextStyle(fontSize: 13, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacyDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Privacy Policy'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'Food Scanner App is committed to protecting your privacy.\n\n'
+            '• Your profile data (name, weight, height, allergies) is stored securely in Firebase Firestore, accessible only to you.\n\n'
+            '• Scan history is stored in your personal Firestore account and is never shared with third parties.\n\n'
+            '• Product data is fetched from the Open Food Facts public database.\n\n'
+            '• Profile photos are stored locally on your device only.\n\n'
+            '• We do not sell, share, or monetise your personal data in any way.\n\n'
+            '• You may delete your account and all associated data at any time by contacting support.\n\n'
+            'Last updated: May 2026',
+            style: TextStyle(fontSize: 13, height: 1.5),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -91,7 +216,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: AppTheme.spaceMD),
                         child: Column(
                           children: [
-                            // Avatar Section
+                            // Avatar
                             Container(
                               width: 120,
                               height: 120,
@@ -107,52 +232,29 @@ class ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ],
                               ),
-                              child: Stack(
-                                children: [
-                                  Center(
-                                    child: Text(
-                                      name[0].toUpperCase(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 48,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                              child: Center(
+                                child: Text(
+                                  name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: Container(
-                                      width: 36,
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.secondary,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white, width: 2),
-                                      ),
-                                      child: const Icon(
-                                        Icons.camera_alt_rounded,
-                                        color: Colors.white,
-                                        size: 18,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ).animate().scale(delay: 200.ms, duration: 600.ms, curve: Curves.elasticOut),
 
                             const SizedBox(height: AppTheme.spaceSM),
 
-                            // Name & Email
                             Text(
                               name,
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ).animate().fadeIn(delay: 300.ms),
-                            
+
                             const SizedBox(height: 4),
-                            
+
                             Text(
                               email,
                               style: theme.textTheme.bodyMedium?.copyWith(
@@ -162,29 +264,17 @@ class ProfileScreenState extends State<ProfileScreen> {
 
                             const SizedBox(height: AppTheme.spaceLG),
 
-                            // Account Settings
+                            // Account Settings — single entry to preferences
                             CustomCard(
                               padding: const EdgeInsets.all(0),
-                              child: Column(
-                                children: [
-                                  _buildSettingsTile(
-                                    icon: Icons.person_outline_rounded,
-                                    title: 'Edit Profile',
-                                    subtitle: 'Update your information',
-                                    onTap: () {
-                                      // Navigate to edit profile
-                                    },
-                                  ),
-                                  const Divider(height: 1),
-                                  _buildSettingsTile(
-                                    icon: Icons.notifications_outlined,
-                                    title: 'Allergies & Preferences',
-                                    subtitle: 'Manage dietary restrictions',
-                                    onTap: () {
-                                      Navigator.pushNamed(context, '/signup_preferences');
-                                    },
-                                  ),
-                                ],
+                              child: _buildSettingsTile(
+                                icon: Icons.health_and_safety_outlined,
+                                title: 'Allergies & Preferences',
+                                subtitle: 'Manage profile, diet & health conditions',
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/update_preferences')
+                                      .then((_) => _loadUserData());
+                                },
                               ),
                             ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
 
@@ -202,7 +292,8 @@ class ProfileScreenState extends State<ProfileScreen> {
                                     value: _darkMode,
                                     onChanged: (value) {
                                       setState(() => _darkMode = value);
-                                      // TODO: Implement theme switching
+                                      _savePref('dark_mode', value);
+                                      context.read<ThemeProvider>().toggleTheme(isDark: value);
                                     },
                                   ),
                                   const Divider(height: 1),
@@ -213,6 +304,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                                     value: _notifications,
                                     onChanged: (value) {
                                       setState(() => _notifications = value);
+                                      _savePref('notifications', value);
                                     },
                                   ),
                                   const Divider(height: 1),
@@ -223,6 +315,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                                     value: _hapticFeedback,
                                     onChanged: (value) {
                                       setState(() => _hapticFeedback = value);
+                                      _savePref('haptic_feedback', value);
                                     },
                                   ),
                                 ],
@@ -245,6 +338,7 @@ class ProfileScreenState extends State<ProfileScreen> {
                                         context: context,
                                         applicationName: 'Food Scanner',
                                         applicationVersion: '1.0.0',
+                                        applicationLegalese: '© 2026 Food Scanner. All rights reserved.',
                                         applicationIcon: Container(
                                           width: 64,
                                           height: 64,
@@ -265,15 +359,15 @@ class ProfileScreenState extends State<ProfileScreen> {
                                   _buildSettingsTile(
                                     icon: Icons.help_outline_rounded,
                                     title: 'Help & Support',
-                                    subtitle: 'Get assistance',
-                                    onTap: () {},
+                                    subtitle: 'FAQs and contact',
+                                    onTap: _showHelpDialog,
                                   ),
                                   const Divider(height: 1),
                                   _buildSettingsTile(
                                     icon: Icons.privacy_tip_outlined,
                                     title: 'Privacy Policy',
                                     subtitle: 'Read our terms',
-                                    onTap: () {},
+                                    onTap: _showPrivacyDialog,
                                   ),
                                 ],
                               ),
@@ -311,6 +405,27 @@ class ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget _buildInitialsAvatar(String name) {
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient,
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          name.isNotEmpty ? name[0].toUpperCase() : 'U',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 48,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSettingsTile({
     required IconData icon,
     required String title,
@@ -318,7 +433,6 @@ class ProfileScreenState extends State<ProfileScreen> {
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-    
     return ListTile(
       leading: Container(
         width: 40,
@@ -329,18 +443,9 @@ class ProfileScreenState extends State<ProfileScreen> {
         ),
         child: Icon(icon, color: AppColors.primary, size: 20),
       ),
-      title: Text(
-        title,
-        style: theme.textTheme.titleSmall,
-      ),
-      subtitle: Text(
-        subtitle,
-        style: theme.textTheme.bodySmall,
-      ),
-      trailing: Icon(
-        Icons.chevron_right_rounded,
-        color: theme.textTheme.bodySmall?.color,
-      ),
+      title: Text(title, style: theme.textTheme.titleSmall),
+      subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
+      trailing: Icon(Icons.chevron_right_rounded, color: theme.textTheme.bodySmall?.color),
       onTap: onTap,
     );
   }
@@ -353,7 +458,6 @@ class ProfileScreenState extends State<ProfileScreen> {
     required ValueChanged<bool> onChanged,
   }) {
     final theme = Theme.of(context);
-    
     return ListTile(
       leading: Container(
         width: 40,
@@ -364,14 +468,8 @@ class ProfileScreenState extends State<ProfileScreen> {
         ),
         child: Icon(icon, color: AppColors.primary, size: 20),
       ),
-      title: Text(
-        title,
-        style: theme.textTheme.titleSmall,
-      ),
-      subtitle: Text(
-        subtitle,
-        style: theme.textTheme.bodySmall,
-      ),
+      title: Text(title, style: theme.textTheme.titleSmall),
+      subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
       trailing: Switch(
         value: value,
         onChanged: onChanged,

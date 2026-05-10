@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:food_scanner_app/theme/app_colors.dart';
 import 'package:food_scanner_app/theme/app_theme.dart';
 
@@ -133,13 +132,10 @@ class CustomSnackbar {
               onPressed: onActionPressed ?? () {},
             )
           : null,
-    ).animate().slideY(
-      begin: 1.0,
-      end: 0.0,
-      duration: 300.ms,
-      curve: Curves.easeOutCubic,
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(snackBar as SnackBar);
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(snackBar);
   }
 }

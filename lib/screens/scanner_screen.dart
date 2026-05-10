@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:vibration/vibration.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:food_scanner_app/services/auth_service.dart';
 import 'package:food_scanner_app/theme/app_colors.dart';
 import 'package:food_scanner_app/theme/app_theme.dart';
@@ -49,8 +50,10 @@ class _ScannerScreenState extends State<ScannerScreen> with SingleTickerProvider
 
     setState(() => _isProcessing = true);
 
-    // Haptic feedback
-    if (await Vibration.hasVibrator() ?? false) {
+    // Haptic feedback — respects user preference
+    final prefs = await SharedPreferences.getInstance();
+    final hapticEnabled = prefs.getBool('haptic_feedback') ?? true;
+    if (hapticEnabled && (await Vibration.hasVibrator() ?? false)) {
       Vibration.vibrate(duration: 100);
     }
 

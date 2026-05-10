@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:food_scanner_app/services/product_service.dart';
 import 'package:food_scanner_app/services/user_service.dart';
 import 'package:food_scanner_app/services/history_service.dart';
+import 'package:food_scanner_app/services/health_scoring_service.dart';
 import 'package:food_scanner_app/constants/health_scoring_constants.dart';
 import 'package:food_scanner_app/components/score_gauge.dart';
 import 'package:food_scanner_app/components/custom_card.dart';
@@ -81,13 +83,13 @@ class ResultsScreenState extends State<ResultsScreen> {
           .toString()
           .toLowerCase()
           .split(",")
-          .map((e) => e.replaceAll("en:", "").trim())
+          .map((e) => e.replaceAll("en:", "").replaceAll("-", " ").trim())
           .where((e) => e.isNotEmpty)
           .toList();
     }
 
-    // Calculate health score and check allergens.
-    Map<String, dynamic> scoreResult = calculateHealthScore(
+    // Calculate health score using shared service
+    Map<String, dynamic> scoreResult = HealthScoringService.calculateHealthScore(
       height: height,
       weight: weight,
       userAllergies: userAllergies,
@@ -105,10 +107,17 @@ class ResultsScreenState extends State<ResultsScreen> {
     int healthScore = scoreResult["score"];
     String allergenNote = scoreResult["allergenNote"];
 
+    // Save scan — include nutritional data so history can recalculate with current profile
     await HistoryService().addScan({
       "productName": productData["name"],
       "healthScore": healthScore,
       "timestamp": DateTime.now().toIso8601String(),
+      "calories": productData["calories"],
+      "protein": productData["protein"],
+      "carbs": productData["carbs"],
+      "fat": productData["fat"],
+      "sugars": productData["sugars"],
+      "allergens": (productData["allergens"] ?? "").toString(),
     });
 
     return {
@@ -119,92 +128,7 @@ class ResultsScreenState extends State<ResultsScreen> {
     };
   }
 
-  Map<String, dynamic> calculateHealthScore({
-    required double height,
-    required double weight,
-    required List<String> userAllergies,
-    required List<String> userConditions,
-    required double calories,
-    required double protein,
-    required double carbs,
-    required double fat,
-    required double sugars,
-    required String productName,
-    required List<String> productAllergens,
-  }) {
-    List<String> detectedAllergens = [];
-
-    // Check product allergens using regex with word boundaries.
-    for (var userAllergen in userAllergies) {
-      final pattern = r'\b' + RegExp.escape(userAllergen) + r'\b';
-      final regex = RegExp(pattern, caseSensitive: false);
-      for (var prodAllergen in productAllergens) {
-        if (regex.hasMatch(prodAllergen)) {
-          if (!detectedAllergens.contains(userAllergen)) {
-            detectedAllergens.add(userAllergen);
-          }
-        }
-      }
-      // Additional check on product name for soy/soya.
-      if ((userAllergen == "soy" || userAllergen == "soya") &&
-          (productName.toLowerCase().contains("soy") ||
-           productName.toLowerCase().contains("soya"))) {
-        if (!detectedAllergens.contains(userAllergen)) {
-          detectedAllergens.add(userAllergen);
-        }
-      }
-    }
-    if (detectedAllergens.isNotEmpty) {
-      String allergenNote = "Allergen present: ${detectedAllergens.join(", ")}";
-      return {"score": 0, "allergenNote": allergenNote};
-    }
-
-    int score = HealthScoringConstants.baseScore;
-
-    // Adjusted calorie penalty
-    if (calories > HealthScoringConstants.calorieThreshold) {
-      score -= (((calories - HealthScoringConstants.calorieThreshold) / HealthScoringConstants.calorieIncrement).ceil() * HealthScoringConstants.caloriepenalty);
-    }
-
-    // Adjusted sugar penalty
-    if (sugars > HealthScoringConstants.sugarThreshold) {
-      score -= (((sugars - HealthScoringConstants.sugarThreshold) / HealthScoringConstants.sugarIncrement).ceil() * HealthScoringConstants.sugarPenalty);
-    }
-
-    // BMI penalty
-    double heightInMeters = height / 100;
-    double bmi = weight / (heightInMeters * heightInMeters);
-    if (bmi > HealthScoringConstants.bmiOverweight) {
-      score -= HealthScoringConstants.bmiOverweightPenalty;
-    } else if (bmi < HealthScoringConstants.bmiUnderweight) {
-      score -= HealthScoringConstants.bmiUnderweightPenalty;
-    }
-
-    // Low protein, high carbs penalty
-    if (protein < HealthScoringConstants.lowProteinThreshold && carbs > HealthScoringConstants.highCarbsThreshold) {
-      score -= HealthScoringConstants.lowProteinHighCarbsPenalty;
-    }
-
-    // Health condition penalties
-    if (userConditions.contains("diabetes") && sugars > HealthScoringConstants.diabetesSugarThreshold) {
-      score -= HealthScoringConstants.diabetesPenalty;
-    }
-    if (userConditions.contains("hypertension") && fat > HealthScoringConstants.hypertensionFatThreshold) {
-      score -= HealthScoringConstants.hypertensionPenalty;
-    }
-
-    // Junk food penalty
-    if (productName.toLowerCase().contains("snickers") ||
-        productName.toLowerCase().contains("peanut")) {
-      score -= HealthScoringConstants.junkFoodPenalty;
-    }
-
-    if (score < HealthScoringConstants.minimumScore) score = HealthScoringConstants.minimumScore;
-    if (score > HealthScoringConstants.maximumScore) score = HealthScoringConstants.maximumScore;
-
-    return {"score": score, "allergenNote": ""};
-  }
-
+  // calculateHealthScore is now in HealthScoringService — see lib/services/health_scoring_service.dart
   String _getScoreDescription(int score) {
     if (score >= 71) return "This product is an excellent choice for your health!";
     if (score >= 61) return "This is a good choice with minor concerns.";
@@ -228,6 +152,57 @@ class ResultsScreenState extends State<ResultsScreen> {
       body: FutureBuilder<Map<String, dynamic>>(
         future: _resultFuture,
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    theme.colorScheme.surface,
+                    theme.scaffoldBackgroundColor,
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.wifi_off_rounded,
+                        size: 64,
+                        color: AppColors.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Could not load product',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        snapshot.error.toString().replaceFirst('Exception: ', ''),
+                        style: theme.textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back_rounded),
+                        label: const Text('Go Back'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Container(
               decoration: BoxDecoration(
@@ -400,31 +375,31 @@ class ResultsScreenState extends State<ResultsScreen> {
                             const SizedBox(height: AppTheme.spaceSM),
                             _buildNutritionRow(
                               'Calories',
-                              '${product["calories"]} kcal',
+                              '${(product["calories"] as double).toStringAsFixed(1)} kcal',
                               Icons.local_fire_department_rounded,
                               AppColors.warning,
                             ),
                             _buildNutritionRow(
                               'Protein',
-                              '${product["protein"]}g',
+                              '${(product["protein"] as double).toStringAsFixed(1)}g',
                               Icons.fitness_center_rounded,
                               AppColors.success,
                             ),
                             _buildNutritionRow(
                               'Carbs',
-                              '${product["carbs"]}g',
+                              '${(product["carbs"] as double).toStringAsFixed(1)}g',
                               Icons.grain_rounded,
                               AppColors.secondary,
                             ),
                             _buildNutritionRow(
                               'Fat',
-                              '${product["fat"]}g',
+                              '${(product["fat"] as double).toStringAsFixed(1)}g',
                               Icons.water_drop_rounded,
                               AppColors.scoreFair,
                             ),
                             _buildNutritionRow(
                               'Sugars',
-                              '${product["sugars"]}g',
+                              '${(product["sugars"] as double).toStringAsFixed(1)}g',
                               Icons.cake_rounded,
                               AppColors.error,
                             ),
@@ -525,7 +500,16 @@ class ResultsScreenState extends State<ResultsScreen> {
                           backgroundColor: theme.colorScheme.surface,
                           textColor: AppColors.primary,
                           onPressed: () {
-                            // Share functionality
+                            final name = product['name'] ?? 'Unknown Product';
+                            Share.share(
+                              '🔍 I scanned "$name" with Food Scanner!\n'
+                              '📊 Health Score: $healthScore/100\n'
+                              '🔥 Calories: ${(product["calories"] as double).toStringAsFixed(1)} kcal\n'
+                              '💪 Protein: ${(product["protein"] as double).toStringAsFixed(1)}g\n'
+                              '🍞 Carbs: ${(product["carbs"] as double).toStringAsFixed(1)}g\n'
+                              '💧 Fat: ${(product["fat"] as double).toStringAsFixed(1)}g',
+                              subject: 'Food Scanner Result',
+                            );
                           },
                         ),
                       ],

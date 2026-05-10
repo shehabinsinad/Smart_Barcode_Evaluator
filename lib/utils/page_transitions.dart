@@ -6,8 +6,9 @@ class AppPageRoute {
   AppPageRoute._();
 
   /// Fade transition
-  static Route<T> fade<T>(Widget page, {int durationMs = 300}) {
+  static Route<T> fade<T>(Widget page, {int durationMs = 300, RouteSettings? settings}) {
     return PageRouteBuilder<T>(
+      settings: settings,
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionDuration: Duration(milliseconds: durationMs),
       reverseTransitionDuration: Duration(milliseconds: durationMs),
@@ -21,8 +22,9 @@ class AppPageRoute {
   }
 
   /// Slide from right (iOS style)
-  static Route<T> slideRight<T>(Widget page, {int durationMs = 300}) {
+  static Route<T> slideRight<T>(Widget page, {int durationMs = 300, RouteSettings? settings}) {
     return PageRouteBuilder<T>(
+      settings: settings,
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionDuration: Duration(milliseconds: durationMs),
       reverseTransitionDuration: Duration(milliseconds: durationMs),
@@ -43,8 +45,9 @@ class AppPageRoute {
   }
 
   /// Slide from bottom
-  static Route<T> slideUp<T>(Widget page, {int durationMs = 350}) {
+  static Route<T> slideUp<T>(Widget page, {int durationMs = 350, RouteSettings? settings}) {
     return PageRouteBuilder<T>(
+      settings: settings,
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionDuration: Duration(milliseconds: durationMs),
       reverseTransitionDuration: Duration(milliseconds: durationMs),
@@ -65,8 +68,9 @@ class AppPageRoute {
   }
 
   /// Scale transition (material style)
-  static Route<T> scale<T>(Widget page, {int durationMs = 300}) {
+  static Route<T> scale<T>(Widget page, {int durationMs = 300, RouteSettings? settings}) {
     return PageRouteBuilder<T>(
+      settings: settings,
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionDuration: Duration(milliseconds: durationMs),
       reverseTransitionDuration: Duration(milliseconds: durationMs),
@@ -87,8 +91,9 @@ class AppPageRoute {
   }
 
   /// Slide and fade combo (premium feel)
-  static Route<T> slideFade<T>(Widget page, {int durationMs = 350}) {
+  static Route<T> slideFade<T>(Widget page, {int durationMs = 350, RouteSettings? settings}) {
     return PageRouteBuilder<T>(
+      settings: settings,
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionDuration: Duration(milliseconds: durationMs),
       reverseTransitionDuration: Duration(milliseconds: durationMs),

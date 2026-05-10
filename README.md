@@ -1,123 +1,207 @@
-# Smart Barcode Evaluator - Nutrition Analysis App
+# 🍱 Smart Barcode Evaluator
 
-A Flutter mobile app that scans product barcodes and provides personalized health scores based on user profiles.
+> A Flutter mobile app that scans food product barcodes and gives you a **personalised health score** based on your body metrics, allergies, and medical conditions.
 
-## 📋 Overview
+---
 
-Smart Barcode Evaluator helps users make informed food choices by analyzing nutritional information against their personal health profile (BMI, allergies, medical conditions).
+## 📸 Screenshots
+
+> **Add screenshots here.** Recommended images to include:
+> 1. **Landing / Login screen** — shows the app's branding
+> 2. **Scanner screen** — camera view with the barcode overlay
+> 3. **Results screen** — the animated score gauge + nutrition breakdown
+> 4. **Scan History screen** — the list of past scans with colour-coded scores
+> 5. **Profile / Preferences screen** — where the user sets height, weight, allergies, conditions
+>
+> Place them in `assets/screenshots/` and link them like:
+> ```md
+> ![Results Screen](assets/screenshots/results.png)
+> ```
+
+---
 
 ## ✨ Features
 
-- **Barcode Scanning** - Camera-based barcode detection using ML Kit
-- **Nutritional Data Retrieval** - Integration with Open Food Facts API
-- **Personalized Health Scoring** - Algorithm calculates 0-100 score based on user profile
-- **Allergen Detection** - Automatic flagging of user-specific allergens
-- **Scan History** - Firebase Firestore storage of past scans
+| Feature | Description |
+|---|---|
+| 📷 **Barcode Scanner** | Camera-based scanning powered by Google ML Kit |
+| 🌐 **Nutrition Lookup** | Pulls live data from the Open Food Facts API |
+| 🧮 **Health Score** | Personalised 0–100 score calculated per user profile |
+| ⚠️ **Allergen Alerts** | Instant warning if a product matches a user allergen |
+| 📜 **Scan History** | All scans stored in Firestore with swipe-to-delete + Undo |
+| 👤 **User Profiles** | Height, weight, BMI, allergies, health conditions |
+| 🌙 **Dark / Light Mode** | System-aware theme with manual toggle |
+| 🔐 **Firebase Auth** | Email/password sign-up and sign-in with friendly error messages |
 
-## 🎯 How It Works
-
-1. User scans product barcode with camera
-2. App fetches nutritional data from Open Food Facts API
-3. Health scoring algorithm analyzes:
-   - Calories (baseline: 200kcal)
-   - Sugar content (baseline: 10g)
-   - Fat content (baseline: 15g)
-   - Allergen matching
-   - BMI-based penalties
-4. Personalized score (0-100) displayed with color-coded rating
-5. Scan saved to user's history in Firestore
+---
 
 ## 🧮 Scoring Algorithm
 
-**Base score:** 100
+The score starts at **100** and deductions are applied based on the product's nutritional content and the user's profile.
 
-**Deductions:**
-- **Allergens:** If product contains user's allergen → Score = 0 (immediate)
-- **Calories:** -5 points per 50kcal above 200kcal
-- **Sugar:** -2 points per 5g above 10g
-- **Fat:** -3 points per 10g above recommended limit
-- **BMI penalty:** 
-  - Overweight (BMI > 25): -5 points
-  - Underweight (BMI < 18.5): -3 points
+| Factor | Condition | Penalty |
+|---|---|---|
+| 🚨 Allergen | Product contains a user allergen | Score → **0** immediately |
+| 🔥 Calories | Every 50 kcal above 200 kcal/100g | −5 pts |
+| 🍬 Sugar | Every 5 g above 10 g/100g | −3 pts |
+| ⚖️ BMI (overweight > 25) | — | −5 pts |
+| ⚖️ BMI (underweight < 18.5) | — | −3 pts |
+| 🥩 Low protein + high carbs | Protein < 10 g **and** carbs > 30 g | −3 pts |
+| 🩺 Diabetes | Sugar > 15 g/100g | −10 pts |
+| 🩺 Hypertension | Fat > 10 g/100g | −5 pts |
 
-**Example:**
-```
-Product: Chocolate bar (300 kcal, 20g sugar, 15g fat)
-User: BMI 27 (overweight), no allergies
+**Score bands:**
 
-Calculation:
-100 - 10 (calories) - 4 (sugar) - 0 (fat) - 5 (BMI) = 81/100
-```
+| Score | Rating | Color |
+|---|---|---|
+| 71 – 100 | Excellent | 🟢 Green |
+| 61 – 70 | Good | 🟢 Light green |
+| 41 – 60 | Fair | 🟡 Amber |
+| 31 – 40 | Poor | 🟠 Orange |
+| 0 – 30 | Bad | 🔴 Red |
+
+---
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** Flutter, Dart
-- **Backend:** Firebase (Authentication, Firestore)
-- **APIs:** Open Food Facts REST API
-- **ML:** ML Kit Barcode Scanning
-- **State Management:** Provider pattern
+- **Framework:** Flutter 3 / Dart
+- **Backend:** Firebase Authentication + Cloud Firestore
+- **Nutrition API:** [Open Food Facts](https://world.openfoodfacts.org/) (free, no key required)
+- **Barcode Scanning:** Google ML Kit (`google_mlkit_barcode_scanning`)
+- **State Management:** Provider
+- **Animations:** `flutter_animate`
+- **Other packages:** `share_plus`, `mobile_scanner`
 
-## 👥 Team Project - My Contribution
+---
 
-This was a **4-person mini-project**. I implemented:
+## 📂 Project Structure
 
-- **Health scoring algorithm** (penalty calculations, BMI integration)
-- **Firebase integration** (Authentication, Firestore database schema)
-- **User profile management** (health data input, allergen selection)
-- **Scan history feature** (Firestore queries, data persistence)
+```
+lib/
+├── components/         # Reusable UI widgets (ScoreGauge, CustomCard, …)
+├── constants/          # Shared scoring thresholds (HealthScoringConstants)
+├── providers/          # ThemeProvider (dark/light mode)
+├── screens/            # All app screens
+├── services/           # Firebase & API service layer
+│   ├── auth_service.dart
+│   ├── health_scoring_service.dart
+│   ├── history_service.dart
+│   ├── product_service.dart
+│   └── user_service.dart
+├── theme/              # AppColors, AppTheme
+└── utils/              # ValidationHelper, PageTransitions
+```
 
-**Other modules** (barcode scanning UI, API integration, frontend design) were developed by teammates.
+---
 
-## 📂 Database Schema (Firestore)
+## 🗄️ Firestore Schema
+
 ```
 users/
   └── {userId}/
-      ├── name: string
-      ├── email: string
-      ├── height: number
-      ├── weight: number
-      ├── bmi: number
-      ├── allergies: array
-      ├── healthConditions: array
-      └── scanHistory/
-          └── {scanId}/
-              ├── productName: string
-              ├── barcode: string
-              ├── nutritionalData: object
-              ├── calculatedScore: number
-              └── timestamp: timestamp
+        ├── name            : string
+        ├── email           : string
+        ├── height          : string   (cm)
+        ├── weight          : string   (kg)
+        ├── allergies       : string   (comma-separated)
+        ├── conditions      : string   (comma-separated)
+        └── scanHistory/
+              └── {scanId}/
+                    ├── productName : string
+                    ├── healthScore : number
+                    ├── calories    : number
+                    ├── protein     : number
+                    ├── carbs       : number
+                    ├── fat         : number
+                    ├── sugars      : number
+                    ├── allergens   : string
+                    └── timestamp   : string (ISO-8601)
 ```
 
-## 🚀 Setup Instructions
+---
 
-1. Clone the repository
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Flutter SDK ≥ 3.x installed
+- Android Studio / VS Code with Flutter plugin
+- A Firebase project (free Spark plan is sufficient)
+
+### Setup
+
+**1. Clone the repository**
 ```bash
 git clone https://github.com/shehabinsinad/Smart_Barcode_Evaluator.git
 cd Smart_Barcode_Evaluator
 ```
 
-2. Install dependencies
+**2. Install dependencies**
 ```bash
 flutter pub get
 ```
 
-3. Configure Firebase
-- Add Firebase configuration files
-- Update `lib/firebase_options.dart`
+**3. Configure Firebase**
 
-4. Run the app
+This repo intentionally excludes Firebase config files. You need to generate your own:
+
+```bash
+# Install FlutterFire CLI if you haven't already
+dart pub global activate flutterfire_cli
+
+# Connect to your Firebase project
+flutterfire configure
+```
+
+This will generate:
+- `lib/firebase_options.dart`
+- `android/app/google-services.json`
+
+Use `lib/firebase_options_example.dart` as a reference for the expected structure.
+
+**4. Enable Firebase services**
+
+In the [Firebase Console](https://console.firebase.google.com/):
+- Enable **Authentication** → Email/Password
+- Enable **Cloud Firestore** (start in test mode, then apply security rules)
+
+**5. Run the app**
 ```bash
 flutter run
 ```
 
-## 📝 Learning Outcomes
+---
 
-- Designing and implementing custom algorithms
-- Working with REST APIs and JSON parsing
-- Firebase backend integration (Auth, Firestore)
-- Mobile app state management
-- Team collaboration using Git
+## 🔒 Security
+
+The following files contain credentials and are **excluded from version control** via `.gitignore`:
+
+| File | Reason |
+|---|---|
+| `lib/firebase_options.dart` | Contains Firebase API key |
+| `android/app/google-services.json` | Contains Firebase project credentials |
+| `ios/Runner/GoogleService-Info.plist` | iOS Firebase credentials |
+| `android/local.properties` | Local SDK paths |
+| `.env` / `.env.*` | Any future environment variables |
+
+> **Note:** The Open Food Facts API is completely free and requires no API key.
+
+---
+
+## 👥 Team
+
+Mini-project developed at **MES College of Engineering** (2024) as part of the B.Tech curriculum.
+
+**Modules I built:**
+- Health scoring algorithm and all penalty logic
+- Firebase Authentication integration + friendly error handling
+- User profile management (health metrics, allergen selection)
+- Scan history (Firestore persistence, swipe-to-delete, undo)
+- Dark/light theme system
+- Full UI polish (score gauge, custom snackbar, animations)
+
+---
 
 ## 📄 License
 
-Mini-project developed at MES College of Engineering (2024).
+Academic mini-project. No commercial use intended.
