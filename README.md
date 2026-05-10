@@ -6,19 +6,28 @@
 
 ## 📸 Screenshots
 
-> **Add screenshots here.** Recommended images to include:
-> 1. **Landing / Login screen** — shows the app's branding
-> 2. **Scanner screen** — camera view with the barcode overlay
-> 3. **Results screen** — the animated score gauge + nutrition breakdown
-> 4. **Scan History screen** — the list of past scans with colour-coded scores
-> 5. **Profile / Preferences screen** — where the user sets height, weight, allergies, conditions
->
-> Place them in `assets/screenshots/` and link them like:
-> ```md
-> ![Results Screen](assets/screenshots/results.png)
-> ```
-
----
+<table>
+  <tr>
+    <td align="center"><b>🏠 Landing</b></td>
+    <td align="center"><b>🏡 Home</b></td>
+    <td align="center"><b>📷 Scanner</b></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshots/1_landing.png" width="220"/></td>
+    <td><img src="assets/screenshots/2_home.png" width="220"/></td>
+    <td><img src="assets/screenshots/3_scanner.png" width="220"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>📊 Results</b></td>
+    <td align="center"><b>📜 Scan History</b></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><img src="assets/screenshots/4_results.png" width="220"/></td>
+    <td><img src="assets/screenshots/5_history.png" width="220"/></td>
+    <td></td>
+  </tr>
+</table>
 
 ## ✨ Features
 
