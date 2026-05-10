@@ -6,6 +6,17 @@
 
 ## 📸 Screenshots
 
+> **To add screenshots:** drop your image files into `assets/screenshots/` using exactly these filenames,
+> then delete this note. The table below will display them automatically.
+>
+> | Filename | Screen |
+> |---|---|
+> | `assets/screenshots/1_landing.png` | Landing / Login screen |
+> | `assets/screenshots/2_home.png` | Home dashboard |
+> | `assets/screenshots/3_scanner.png` | Barcode scanner in action |
+> | `assets/screenshots/4_results.png` | Product analysis + score gauge |
+> | `assets/screenshots/5_history.png` | Scan history list |
+
 <table>
   <tr>
     <td align="center"><b>🏠 Landing</b></td>
